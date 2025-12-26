@@ -1,26 +1,23 @@
 """
 Entrypoint - Server Launcher
-Programmatically starts the n8n Architect server with Uvicorn.
+Silent Mode for MCP Compatibility
 """
 import sys
 from pathlib import Path
+import uvicorn
+from app.core.config import settings
 
 # Ensure app is in path
 sys.path.insert(0, str(Path(__file__).parent))
 
-import uvicorn
-from app.core.config import settings
-
-
 if __name__ == "__main__":
-    print(f"🚀 Starting n8n Architect on http://{settings.api_host}:{settings.api_port}")
-    print(f"📡 n8n endpoint: {settings.n8n_base_url}")
-    print(f"🔧 Debug mode: {settings.debug}")
-    
+    # 🔇 MODO SILENCIO ABSOLUTO: Sin prints, sin logs de info.
+    # Esto es vital para que Antigravity no reciba basura en el canal.
     uvicorn.run(
         "app.main:app",
         host=settings.api_host,
         port=settings.api_port,
         reload=settings.debug,
-        log_level="info"
+        log_level="critical", # Solo errores fatales
+        access_log=False      # Desactiva logs de acceso HTTP
     )

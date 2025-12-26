@@ -66,78 +66,6 @@ async def lifespan(app: FastAPI):
 
 
 # =============================================================================
-# FASTAPI APP INITIALIZATION
-# =============================================================================
-app = FastAPI(
-    title="n8n Architect API",
-    description="Production-grade API and MCP server for n8n workflow orchestration.",
-    version="2.0.0",
-    lifespan=lifespan
-)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-
-# =============================================================================
-# GLOBAL EXCEPTION HANDLER
-# =============================================================================
-@app.exception_handler(Exception)
-async def global_exception_handler(request: Request, exc: Exception):
-    """
-    Catches any unhandled error and returns it in Envelope format.
-    Ensures n8n never receives a raw error.
-    """
-    logger.error(f"Unhandled exception: {str(exc)}")
-    return JSONResponse(
-        status_code=500,
-        content={
-            "status": "error",
-            "code": 500,
-            "message": str(exc),
-            "path": str(request.url.path)
-        }
-    )
-
-
-# =============================================================================
-# HEALTH & INFO ENDPOINTS
-# =============================================================================
-@app.get("/health")
-async def health_check():
-    """Check server and n8n connectivity status."""
-    try:
-        client = get_client()
-        await client.get("/workflows")
-        n8n_status = "connected"
-    except Exception as e:
-        n8n_status = f"error: {str(e)[:50]}"
-    
-    return {
-        "status": "healthy",
-        "n8n_connection": n8n_status,
-        "version": "2.0.0"
-    }
-
-
-@app.get("/info")
-async def server_info():
-    """Get server configuration info."""
-    return {
-        "name": "n8n Architect",
-        "version": "2.0.0",
-        "n8n_base_url": settings.n8n_base_url,
-        "n8n_editor_url": settings.n8n_editor_url,
-        "n8n_data_dir": settings.n8n_data_dir
-    }
-
-
-# =============================================================================
 # FASTMCP SERVER INITIALIZATION
 # =============================================================================
 mcp = FastMCP("n8n Architect")
@@ -164,11 +92,6 @@ mcp.tool()(uninstall_community_node)
 mcp.tool()(list_installed_nodes)
 mcp.tool()(get_n8n_info)
 
-# --- Mount MCP SSE Transport on FastAPI ---
-# This enables MCP clients (like Antigravity) to connect via Server-Sent Events
-# The SSE endpoint will be available at /sse/sse (mount path + sse handler path)
-app.mount("/sse", mcp.http_app(transport="sse"))
-
 
 # =============================================================================
 # COMPOSITE TOOLS (High-Level Operations)
@@ -182,19 +105,6 @@ async def auto_fix_workflow(
 ) -> str:
     """
     Auto-fix a failing workflow: diagnose the error, then apply a patch.
-    
-    This is a composite tool that:
-    1. Reads the failed execution to get workflow ID and error details
-    2. Reads the current workflow structure
-    3. Applies the fixed nodes/connections
-    
-    Args:
-        execution_id: ID of the failed execution to fix
-        fixed_nodes: The corrected node definitions
-        fixed_connections: Optional corrected connections (uses existing if not provided)
-    
-    Returns:
-        JSON string with diagnosis and fix result.
     """
     logger.info(f"Auto-fix initiated for execution: {execution_id}")
     
@@ -260,17 +170,6 @@ async def create_workflow(
 ) -> str:
     """
     Create a new workflow from JSON strings.
-    This is an alias for deploy_workflow, designed for AI agents
-    that prefer to pass JSON as strings.
-    
-    Args:
-        name: Name for the new workflow
-        nodes_json: JSON string containing node definitions
-        connections_json: JSON string containing connections
-        activate: Whether to activate after creation
-    
-    Returns:
-        JSON string with creation result.
     """
     return await deploy_workflow(
         name=name,
@@ -285,26 +184,117 @@ async def create_workflow(
 async def install_external_node(package_name: str) -> str:
     """
     Install an external/community node from npm.
-    Alias for install_community_node with clearer naming.
-    
-    Args:
-        package_name: The npm package name (e.g., 'n8n-nodes-browserless')
-    
-    Returns:
-        JSON string with installation result.
     """
     return await install_community_node(package_name)
+
+
+# =============================================================================
+# FASTAPI APP INITIALIZATION
+# =============================================================================
+app = FastAPI(
+    title="n8n Architect API",
+    description="Production-grade API and MCP server for n8n workflow orchestration.",
+    version="2.0.0",
+    lifespan=lifespan
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+# =============================================================================
+# MCP MOUNTING (The Critical Fix)
+# =============================================================================
+try:
+    # Attempt to mount using fastmcp internal method if available
+    # This exposes the SSE endpoint at /sse/sse (standard pattern)
+    # or /sse depending on implementation
+    if hasattr(mcp, "mount_sse_server"):
+        mcp.mount_sse_server(app, "/sse")
+    else:
+        # Fallback manual mounting
+        logger.info("Using manual SSE handler mounting")
+        @app.get("/sse")
+        async def handle_sse(request: Request):
+            return await mcp.sse_handler(request)
+            
+        @app.post("/sse")
+        async def handle_sse_post(request: Request):
+            return await mcp.sse_handler(request)
+            
+except Exception as e:
+    logger.error(f"Failed to mount MCP SSE server: {e}")
+    # Last resort fallback
+    @app.get("/sse")
+    async def handle_sse_fallback(request: Request):
+        return await mcp.sse_handler(request)
+
+
+# =============================================================================
+# GLOBAL EXCEPTION HANDLER
+# =============================================================================
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    """
+    Catches any unhandled error and returns it in Envelope format.
+    Ensures n8n never receives a raw error.
+    """
+    logger.error(f"Unhandled exception: {str(exc)}")
+    return JSONResponse(
+        status_code=500,
+        content={
+            "status": "error",
+            "code": 500,
+            "message": str(exc),
+            "path": str(request.url.path)
+        }
+    )
+
+
+# =============================================================================
+# HEALTH & INFO ENDPOINTS
+# =============================================================================
+@app.get("/health")
+async def health_check():
+    """Check server and n8n connectivity status."""
+    try:
+        client = get_client()
+        await client.get("/workflows")
+        n8n_status = "connected"
+    except Exception as e:
+        n8n_status = f"error: {str(e)[:50]}"
+    
+    return {
+        "status": "healthy",
+        "n8n_connection": n8n_status,
+        "version": "2.0.0"
+    }
+
+
+@app.get("/info")
+async def server_info():
+    """Get server configuration info."""
+    return {
+        "name": "n8n Architect",
+        "version": "2.0.0",
+        "n8n_base_url": settings.n8n_base_url,
+        "n8n_editor_url": settings.n8n_editor_url,
+        "n8n_data_dir": settings.n8n_data_dir
+    }
 
 
 def get_mcp() -> FastMCP:
     """Get the FastMCP server instance."""
     return mcp
 
-
 def get_app() -> FastAPI:
     """Get the FastAPI app instance."""
     return app
-
 
 if __name__ == "__main__":
     mcp.run()
