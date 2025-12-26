@@ -25,7 +25,8 @@ def setup_logging(name: str = "n8n_architect", level: Optional[int] = None) -> l
     
     # Avoid adding handlers multiple times
     if not logger.handlers:
-        handler = logging.StreamHandler(sys.stdout)
+        # IMPORTANT: Use stderr for logs, as stdout is used for MCP protocol
+        handler = logging.StreamHandler(sys.stderr)
         handler.setLevel(level)
         
         formatter = logging.Formatter(

@@ -43,7 +43,7 @@ class N8NClient:
     def __init__(self):
         if self._client is None:
 
-            self._base_url = settings.n8n_base_url
+            self._base_url = settings.api_url
             self._headers = {
                 "X-N8N-API-KEY": settings.n8n_api_key,
                 "Content-Type": "application/json",
@@ -90,9 +90,12 @@ class N8NClient:
         except httpx.HTTPStatusError as e:
             error_detail = "Unknown error"
             try:
+                # Try to parse JSON error from n8n
                 error_detail = e.response.json()
             except Exception:
-                error_detail = e.response.text
+                # Fallback to text for HTML/Plaintext errors (common in proxy/auth failures)
+                error_detail = e.response.text[:200]  # Truncate to avoid massive HTML dumps
+            
             raise N8NClientError(
                 status_code=e.response.status_code,
                 message=f"n8n API Error: {error_detail}",

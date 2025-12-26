@@ -15,4 +15,16 @@ from app.main import mcp
 
 if __name__ == "__main__":
     # Run in stdio mode for MCP client integration
-    mcp.run()
+    # We must suppress the startup banner that FastMCP prints to stdout
+    import contextlib
+    import io
+    
+    # Simple hack: Capture stdout during initialization if the library is chatty
+    # However, FastMCP needs stdout for communication.
+    # If the banner is unavoidable, we might need a different entry point.
+    
+    # Trying clean run
+    try:
+        mcp.run() 
+    except KeyboardInterrupt:
+        pass

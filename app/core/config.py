@@ -19,6 +19,15 @@ class Settings(BaseSettings):
         alias="N8N_DATA_DIR"
     )
     n8n_editor_url: str = Field(default="http://localhost:5678", alias="N8N_EDITOR_URL")
+
+    @property
+    def api_url(self) -> str:
+        """Ensure the API URL is correctly formatted."""
+        url = self.n8n_base_url.rstrip("/")
+        if not url.endswith("/api/v1"):
+            url += "/api/v1"
+        return url
+
     
     # Server Configuration
     api_host: str = Field(default="0.0.0.0", alias="API_HOST")
