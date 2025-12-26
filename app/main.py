@@ -164,6 +164,11 @@ mcp.tool()(uninstall_community_node)
 mcp.tool()(list_installed_nodes)
 mcp.tool()(get_n8n_info)
 
+# --- Mount MCP SSE Transport on FastAPI ---
+# This enables MCP clients (like Antigravity) to connect via Server-Sent Events
+# The SSE endpoint will be available at /sse/sse (mount path + sse handler path)
+app.mount("/sse", mcp.http_app(transport="sse"))
+
 
 # =============================================================================
 # COMPOSITE TOOLS (High-Level Operations)
