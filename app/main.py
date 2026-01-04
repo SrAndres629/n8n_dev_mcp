@@ -46,7 +46,27 @@ from app.services.docker import (
     get_container_stats,
     restart_container,
     analyze_all_container_errors,
-    get_container_inspect
+    analyze_all_container_errors,
+    get_container_inspect,
+    list_container_files,
+    read_container_file,
+    run_container_command,
+    run_sql_in_container,
+    prune_docker_images,
+    check_container_connection,
+    inspect_container_dns,
+    audit_image_freshness,
+    audit_image_freshness,
+    backup_volume_to_host,
+    grep_log_across_containers,
+    scan_container_security,
+    recommend_resource_limits,
+    create_container_snapshot,
+    check_port_availability,
+    restore_volume_from_host,
+    find_newer_image_tags,
+    add_compose_service_dependency,
+    summarize_log_patterns
 )
 
 
@@ -115,6 +135,26 @@ mcp.tool()(get_container_stats)
 mcp.tool()(restart_container)
 mcp.tool()(analyze_all_container_errors)
 mcp.tool()(get_container_inspect)
+
+# --- Register God Level Docker Tools ---
+mcp.tool()(list_container_files)
+mcp.tool()(read_container_file)
+mcp.tool()(run_container_command)
+mcp.tool()(run_sql_in_container)
+mcp.tool()(prune_docker_images)
+mcp.tool()(check_container_connection)
+mcp.tool()(inspect_container_dns)
+mcp.tool()(audit_image_freshness)
+mcp.tool()(backup_volume_to_host)
+mcp.tool()(grep_log_across_containers)
+mcp.tool()(scan_container_security)
+mcp.tool()(recommend_resource_limits)
+mcp.tool()(create_container_snapshot)
+mcp.tool()(check_port_availability)
+mcp.tool()(restore_volume_from_host)
+mcp.tool()(find_newer_image_tags)
+mcp.tool()(add_compose_service_dependency)
+mcp.tool()(summarize_log_patterns)
 
 
 # =============================================================================
