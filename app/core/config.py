@@ -34,6 +34,10 @@ class Settings(BaseSettings):
     api_port: int = Field(default=8000, alias="API_PORT")
     debug: bool = Field(default=False, alias="DEBUG")
     
+    # Feature Toggles
+    enable_docker_tools: bool = Field(default=True, alias="ENABLE_DOCKER_TOOLS")
+    enable_n8n_tools: bool = Field(default=True, alias="ENABLE_N8N_TOOLS")
+    
     # HTTP Client Configuration
     http_timeout: float = Field(default=30.0, alias="HTTP_TIMEOUT")
     http_retries: int = Field(default=3, alias="HTTP_RETRIES")

@@ -39,6 +39,73 @@ from app.services.packages import (
     get_n8n_info
 )
 from app.services.credentials import create_credential, list_credentials, get_credential_schema
+
+# Import God Level service modules
+from app.services.live_surgery import (
+    get_waiting_executions,
+    trigger_workflow_now,
+    inject_execution_data,
+    rerun_node_with_patch,
+    get_execution_data,
+    retry_failed_execution
+)
+from app.services.cicd import (
+    create_workflow_snapshot,
+    list_workflow_snapshots,
+    restore_workflow_from_snapshot,
+    sync_workflows_to_git,
+    import_workflow_from_git,
+    workflow_unit_test,
+    shadow_test_workflow,
+    compare_workflow_versions
+)
+from app.services.autohealing import (
+    health_check_all,
+    smart_db_prune,
+    verify_credentials_health,
+    get_error_patterns,
+    auto_restart_failed_workflows,
+    get_system_metrics
+)
+from app.services.semantic import (
+    explain_workflow_impact,
+    generate_workflow_diagram,
+    semantic_search_workflows,
+    map_data_flow,
+    identify_bottlenecks
+)
+from app.services.precognition import (
+    traffic_anomaly_detection,
+    token_burn_rate_prediction,
+    predict_failures,
+    compute_reliability_score,
+    detect_silence_anomaly
+)
+from app.services.evolution import (
+    ab_test_workflow,
+    compare_workflow_performance,
+    suggest_optimizations,
+    workflow_complexity_analysis
+)
+from app.services.security import (
+    security_audit_workflow,
+    scan_for_pii,
+    emergency_deactivate_all,
+    check_credential_usage
+)
+from app.services.node_factory import (
+    scaffold_custom_node,
+    build_custom_node,
+    list_custom_nodes,
+    get_node_template
+)
+from app.services.orchestration import (
+    workflow_lint,
+    generate_documentation,
+    export_all_documentation,
+    get_workflow_dependencies
+)
+
 from app.services.docker import (
     list_docker_containers,
     get_container_logs,
@@ -100,69 +167,142 @@ async def lifespan(app: FastAPI):
 # =============================================================================
 mcp = FastMCP("n8n Architect")
 
-# --- Register Management Tools ---
-mcp.tool()(list_all_workflows)
-mcp.tool()(toggle_workflow_state)
-mcp.tool()(delete_workflow)
-mcp.tool()(get_workflow_tags)
+if settings.enable_n8n_tools:
+    # --- Register Management Tools ---
+    mcp.tool(name="n8n_list_workflows")(list_all_workflows)
+    mcp.tool(name="n8n_toggle_workflow")(toggle_workflow_state)
+    mcp.tool(name="n8n_delete_workflow")(delete_workflow)
+    mcp.tool(name="n8n_get_workflow_tags")(get_workflow_tags)
 
-# --- Register Architecture Tools ---
-mcp.tool()(read_workflow_structure)
-mcp.tool()(deploy_workflow)
-mcp.tool()(clone_workflow)
+    # --- Register Architecture Tools ---
+    mcp.tool(name="n8n_read_workflow")(read_workflow_structure)
+    mcp.tool(name="n8n_deploy_workflow")(deploy_workflow)
+    mcp.tool(name="n8n_clone_workflow")(clone_workflow)
 
-# --- Register Debugging Tools ---
-mcp.tool()(diagnose_execution)
-mcp.tool()(analyze_execution_failures)
-mcp.tool()(get_execution_history)
+    # --- Register Debugging Tools ---
+    mcp.tool(name="n8n_diagnose_execution")(diagnose_execution)
+    mcp.tool(name="n8n_analyze_failures")(analyze_execution_failures)
+    mcp.tool(name="n8n_get_execution_history")(get_execution_history)
 
-# --- Register Package Management Tools ---
-mcp.tool()(install_community_node)
-mcp.tool()(uninstall_community_node)
-mcp.tool()(list_installed_nodes)
-mcp.tool()(get_n8n_info)
+    # --- Register Package Management Tools ---
+    mcp.tool(name="n8n_install_community_node")(install_community_node)
+    mcp.tool(name="n8n_uninstall_community_node")(uninstall_community_node)
+    mcp.tool(name="n8n_list_installed_nodes")(list_installed_nodes)
+    mcp.tool(name="n8n_get_info")(get_n8n_info)
 
-# --- Register Credential Tools ---
-mcp.tool()(create_credential)
-mcp.tool()(list_credentials)
-mcp.tool()(get_credential_schema)
+    # --- Register Credential Tools ---
+    mcp.tool(name="n8n_create_credential")(create_credential)
+    mcp.tool(name="n8n_list_credentials")(list_credentials)
+    mcp.tool(name="n8n_get_credential_schema")(get_credential_schema)
 
-# --- Register Docker Debugging Tools ---
-mcp.tool()(list_docker_containers)
-mcp.tool()(get_container_logs)
-mcp.tool()(diagnose_container_errors)
-mcp.tool()(get_container_stats)
-mcp.tool()(restart_container)
-mcp.tool()(analyze_all_container_errors)
-mcp.tool()(get_container_inspect)
+if settings.enable_docker_tools:
+    # --- Register Docker Debugging Tools ---
+    mcp.tool(name="docker_list_containers")(list_docker_containers)
+    mcp.tool(name="docker_get_logs")(get_container_logs)
+    mcp.tool(name="docker_diagnose_errors")(diagnose_container_errors)
+    mcp.tool(name="docker_get_stats")(get_container_stats)
+    mcp.tool(name="docker_restart_container")(restart_container)
+    mcp.tool(name="docker_analyze_all_errors")(analyze_all_container_errors)
+    mcp.tool(name="docker_inspect_container")(get_container_inspect)
 
-# --- Register God Level Docker Tools ---
-mcp.tool()(list_container_files)
-mcp.tool()(read_container_file)
-mcp.tool()(run_container_command)
-mcp.tool()(run_sql_in_container)
-mcp.tool()(prune_docker_images)
-mcp.tool()(check_container_connection)
-mcp.tool()(inspect_container_dns)
-mcp.tool()(audit_image_freshness)
-mcp.tool()(backup_volume_to_host)
-mcp.tool()(grep_log_across_containers)
-mcp.tool()(scan_container_security)
-mcp.tool()(recommend_resource_limits)
-mcp.tool()(create_container_snapshot)
-mcp.tool()(check_port_availability)
-mcp.tool()(restore_volume_from_host)
-mcp.tool()(find_newer_image_tags)
-mcp.tool()(add_compose_service_dependency)
-mcp.tool()(summarize_log_patterns)
+    # --- Register God Level Docker Tools ---
+    mcp.tool(name="docker_list_files")(list_container_files)
+    mcp.tool(name="docker_read_file")(read_container_file)
+    mcp.tool(name="docker_run_command")(run_container_command)
+    mcp.tool(name="docker_run_sql")(run_sql_in_container)
+    mcp.tool(name="docker_prune_images")(prune_docker_images)
+    mcp.tool(name="docker_check_connectivity")(check_container_connection)
+    mcp.tool(name="docker_inspect_dns")(inspect_container_dns)
+    mcp.tool(name="docker_audit_freshness")(audit_image_freshness)
+    mcp.tool(name="docker_backup_volume")(backup_volume_to_host)
+    mcp.tool(name="docker_grep_logs")(grep_log_across_containers)
+    mcp.tool(name="docker_scan_security")(scan_container_security)
+    mcp.tool(name="docker_recommend_limits")(recommend_resource_limits)
+    mcp.tool(name="docker_create_snapshot")(create_container_snapshot)
+    mcp.tool(name="docker_check_port")(check_port_availability)
+    mcp.tool(name="docker_restore_volume")(restore_volume_from_host)
+    mcp.tool(name="docker_find_tags")(find_newer_image_tags)
+    mcp.tool(name="docker_add_dependency")(add_compose_service_dependency)
+    mcp.tool(name="docker_summarize_log_patterns")(summarize_log_patterns)
+
+
+# =============================================================================
+# GOD LEVEL TOOLS REGISTRATION
+# =============================================================================
+
+if settings.enable_n8n_tools:
+    # --- Live State Surgery Tools ---
+    mcp.tool(name="n8n_get_waiting_executions")(get_waiting_executions)
+    mcp.tool(name="n8n_trigger_now")(trigger_workflow_now)
+    mcp.tool(name="n8n_inject_execution_data")(inject_execution_data)
+    mcp.tool(name="n8n_rerun_with_patch")(rerun_node_with_patch)
+    mcp.tool(name="n8n_get_execution_data")(get_execution_data)
+    mcp.tool(name="n8n_retry_failed_execution")(retry_failed_execution)
+
+    # --- CI/CD & Version Control Tools ---
+    mcp.tool(name="n8n_create_snapshot")(create_workflow_snapshot)
+    mcp.tool(name="n8n_list_snapshots")(list_workflow_snapshots)
+    mcp.tool(name="n8n_restore_snapshot")(restore_workflow_from_snapshot)
+    mcp.tool(name="n8n_sync_to_git")(sync_workflows_to_git)
+    mcp.tool(name="n8n_import_from_git")(import_workflow_from_git)
+    mcp.tool(name="n8n_unit_test")(workflow_unit_test)
+    mcp.tool(name="n8n_shadow_test")(shadow_test_workflow)
+    mcp.tool(name="n8n_compare_versions")(compare_workflow_versions)
+
+    # --- Auto-Healing Tools ---
+    mcp.tool(name="n8n_health_check_all")(health_check_all)
+    mcp.tool(name="n8n_prune_history")(smart_db_prune)
+    mcp.tool(name="n8n_verify_credentials")(verify_credentials_health)
+    mcp.tool(name="n8n_get_error_patterns")(get_error_patterns)
+    mcp.tool(name="n8n_auto_restart_failed")(auto_restart_failed_workflows)
+    mcp.tool(name="n8n_get_system_metrics")(get_system_metrics)
+
+    # --- Semantic Intelligence Tools ---
+    mcp.tool(name="n8n_explain_impact")(explain_workflow_impact)
+    mcp.tool(name="n8n_generate_diagram")(generate_workflow_diagram)
+    mcp.tool(name="n8n_semantic_search")(semantic_search_workflows)
+    mcp.tool(name="n8n_map_data_flow")(map_data_flow)
+    mcp.tool(name="n8n_identify_bottlenecks")(identify_bottlenecks)
+
+    # --- Precognition Tools ---
+    mcp.tool(name="n8n_detect_anomaly")(traffic_anomaly_detection)
+    mcp.tool(name="n8n_predict_burn_rate")(token_burn_rate_prediction)
+    mcp.tool(name="n8n_predict_failures")(predict_failures)
+    mcp.tool(name="n8n_compute_reliability")(compute_reliability_score)
+    mcp.tool(name="n8n_detect_silence")(detect_silence_anomaly)
+
+    # --- Evolution Engine Tools ---
+    mcp.tool(name="n8n_ab_test_workflow")(ab_test_workflow)
+    mcp.tool(name="n8n_compare_performance")(compare_workflow_performance)
+    mcp.tool(name="n8n_suggest_optimizations")(suggest_optimizations)
+    mcp.tool(name="n8n_analyze_complexity")(workflow_complexity_analysis)
+
+    # --- Security Tools ---
+    mcp.tool(name="n8n_security_audit")(security_audit_workflow)
+    mcp.tool(name="n8n_scan_pii")(scan_for_pii)
+    mcp.tool(name="n8n_kill_switch")(emergency_deactivate_all)
+    mcp.tool(name="n8n_check_credential_usage")(check_credential_usage)
+
+    # --- Custom Node Factory Tools ---
+    mcp.tool(name="n8n_scaffold_node")(scaffold_custom_node)
+    mcp.tool(name="n8n_build_node")(build_custom_node)
+    mcp.tool(name="n8n_list_custom_nodes")(list_custom_nodes)
+    mcp.tool(name="n8n_get_node_template")(get_node_template)
+
+    # --- Orchestration Tools ---
+    mcp.tool(name="n8n_lint_workflow")(workflow_lint)
+    mcp.tool(name="n8n_generate_docs")(generate_documentation)
+    mcp.tool(name="n8n_export_docs")(export_all_documentation)
+    mcp.tool(name="n8n_get_dependencies")(get_workflow_dependencies)
+
 
 
 # =============================================================================
 # COMPOSITE TOOLS (High-Level Operations)
 # =============================================================================
-@mcp.tool()
+@mcp.tool(name="n8n_auto_fix_workflow")
 @safe_tool
-async def auto_fix_workflow(
+async def auto_fix_workflow_tool(
     execution_id: str,
     fixed_nodes: Union[str, List[Dict[str, Any]]],
     fixed_connections: Union[str, Dict[str, Any], None] = None
@@ -170,63 +310,14 @@ async def auto_fix_workflow(
     """
     Auto-fix a failing workflow: diagnose the error, then apply a patch.
     """
-    logger.info(f"Auto-fix initiated for execution: {execution_id}")
-    
-    # Step 1: Diagnose the failure
-    diagnosis_result = await diagnose_execution(execution_id)
-    diagnosis = json.loads(diagnosis_result)
-    
-    if "error" in diagnosis.get("status", ""):
-        return diagnosis_result
-    
-    workflow_id = diagnosis.get("workflow", {}).get("workflow_id")
-    workflow_name = diagnosis.get("workflow", {}).get("workflow_name", "Unknown")
-    
-    if not workflow_id:
-        return json.dumps({
-            "status": "error",
-            "message": "Could not determine workflow ID from execution"
-        }, indent=2)
-    
-    logger.info(f"Diagnosed workflow: {workflow_name} ({workflow_id})")
-    
-    # Step 2: Get current workflow if connections not provided
-    if fixed_connections is None:
-        logger.info("Fetching current workflow connections")
-        current_wf = await read_workflow_structure(workflow_id)
-        current_data = json.loads(current_wf)
-        fixed_connections = current_data.get("connections", {})
-    
-    # Step 3: Deploy the fix
-    logger.info("Deploying fixed workflow")
-    deploy_result = await deploy_workflow(
-        name=workflow_name,
-        nodes=fixed_nodes,
-        connections=fixed_connections,
-        activate=False  # Don't auto-activate fixed workflows
-    )
-    
-    deploy_data = json.loads(deploy_result)
-    
-    result = {
-        "status": "success",
-        "action": "auto_fix",
-        "original_error": {
-            "execution_id": execution_id,
-            "failed_node": diagnosis.get("diagnosis", {}).get("failed_node"),
-            "error_message": diagnosis.get("diagnosis", {}).get("error_message")
-        },
-        "fix_result": deploy_data,
-        "next_steps": "Review the fixed workflow and activate when ready."
-    }
-    
-    logger.info(f"Auto-fix completed for workflow: {workflow_id}")
-    return json.dumps(result, indent=2)
+    # Renamed local function to avoid conflict with registration name if needed
+    # but actual logic stays same
+    return await auto_fix_workflow(execution_id, fixed_nodes, fixed_connections)
 
 
-@mcp.tool()
+@mcp.tool(name="n8n_create_workflow")
 @safe_tool
-async def create_workflow(
+async def create_new_workflow_tool(
     name: str,
     nodes_json: str,
     connections_json: str,
@@ -243,13 +334,14 @@ async def create_workflow(
     )
 
 
-@mcp.tool()
+@mcp.tool(name="n8n_install_external_node")
 @safe_tool
-async def install_external_node(package_name: str) -> str:
+async def install_ext_node_tool(package_name: str) -> str:
     """
     Install an external/community node from npm.
     """
     return await install_community_node(package_name)
+
 
 
 # =============================================================================
