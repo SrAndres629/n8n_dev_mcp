@@ -38,6 +38,16 @@ from app.services.packages import (
     list_installed_nodes,
     get_n8n_info
 )
+from app.services.credentials import create_credential, list_credentials, get_credential_schema
+from app.services.docker import (
+    list_docker_containers,
+    get_container_logs,
+    diagnose_container_errors,
+    get_container_stats,
+    restart_container,
+    analyze_all_container_errors,
+    get_container_inspect
+)
 
 
 # =============================================================================
@@ -91,6 +101,20 @@ mcp.tool()(install_community_node)
 mcp.tool()(uninstall_community_node)
 mcp.tool()(list_installed_nodes)
 mcp.tool()(get_n8n_info)
+
+# --- Register Credential Tools ---
+mcp.tool()(create_credential)
+mcp.tool()(list_credentials)
+mcp.tool()(get_credential_schema)
+
+# --- Register Docker Debugging Tools ---
+mcp.tool()(list_docker_containers)
+mcp.tool()(get_container_logs)
+mcp.tool()(diagnose_container_errors)
+mcp.tool()(get_container_stats)
+mcp.tool()(restart_container)
+mcp.tool()(analyze_all_container_errors)
+mcp.tool()(get_container_inspect)
 
 
 # =============================================================================

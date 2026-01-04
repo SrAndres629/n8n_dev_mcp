@@ -26,7 +26,7 @@ class Settings(BaseSettings):
         url = self.n8n_base_url.rstrip("/")
         if not url.endswith("/api/v1"):
             url += "/api/v1"
-        return url
+        return url + "/"
 
     
     # Server Configuration

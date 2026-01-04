@@ -1,0 +1,10 @@
+__pycache__
+venv
+.git
+.gitignore
+*.log
+docker_verify.log
+check_alive.py
+test_*.py
+verify_*.py
+.env.example

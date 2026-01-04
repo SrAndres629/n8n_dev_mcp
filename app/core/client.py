@@ -77,6 +77,9 @@ class N8NClient:
         """
         Execute an HTTP request with standardized error handling.
         """
+        if endpoint.startswith("/"):
+            endpoint = endpoint[1:]
+
         try:
             response = await self._client.request(
                 method=method,
