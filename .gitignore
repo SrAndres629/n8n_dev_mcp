@@ -50,3 +50,9 @@ logs/
 .pytest_cache/
 .coverage
 htmlcov/
+
+# Temp outputs
+*output.txt
+results.txt
+pip_list.txt
+

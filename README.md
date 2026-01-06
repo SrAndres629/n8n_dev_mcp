@@ -1,81 +1,55 @@
-# n8n Architect MCP Server
+# n8n Architect - Quantum Core MCP
 
-Production-grade MCP server for n8n workflow orchestration.
+A Senior-Grade Master Control Process (MCP) for n8n and Docker orchestration, designed for high-fidelity agentic autonomous development.
 
-## Features
+## 🚀 Architecture: Expert Kernels
 
-- **Smart Upsert**: Create or update workflows by name
-- **Deep Diagnostics**: Analyze failed executions with detailed error extraction
-- **Package Management**: Install community nodes via npm
-- **Auto-Fix**: Composite tool to diagnose and patch failing workflows
+The system has been refactored from a flat 94-tool model to **10 High-Fidelity Expert Kernels**. This reduces agent cognitive load while maintaining 100% of the underlying power.
 
-## Quick Start
+### Available Kernels
+1.  **`kernel_workflow_architect`**: Full workflow lifecycle (Deploy, Snapshots, Git).
+2.  **`kernel_operational_surgeon`**: Live state manipulation & auto-healing.
+3.  **`kernel_system_oracle`**: Predictive metrics, anomalies & reliability grades.
+4.  **`kernel_infrastructure_guardian`**: Docker, security & resource optimization.
+5.  **`kernel_semantic_intelligence`**: Documentation, diagrams & impact analysis.
+6.  **`kernel_asset_factory`**: Custom node scaffolding & credentials.
+7.  **`list_expert_skills`**: Dynamic discovery of 85+ underlying skills.
 
-### Windows
-```batch
-start_server.bat
-```
+### Strategic Protocols
+- **`system_war_room_report`**: Strategic system overview.
+- **`protocol_execute_sdlc`**: Automated Audit/Security/Optimization loop.
+- **`shadow_simulation_patch`**: Risk-free fix simulation.
 
-### Manual Setup
-```bash
-# Create virtual environment
-python -m venv venv
+## 🛠️ Setup & Usage
 
-# Activate (Windows)
-venv\Scripts\activate
+### 1. Requirements
+- Python 3.10+
+- n8n instance with API enabled
+- Docker Desktop (local)
 
-# Install dependencies
-pip install -r requirements.txt
-
-# Run server
-python run.py
-```
-
-## Configuration
-
-Create a `.env` file:
+### 2. Environment Configuration
+Create a `.env` file with:
 ```env
-N8N_API_KEY=your_api_key_here
-N8N_BASE_URL=http://localhost:5678/api/v1
-N8N_EDITOR_URL=http://localhost:5678
-N8N_DATA_DIR=~/.n8n
-API_HOST=0.0.0.0
-API_PORT=8000
-DEBUG=false
+N8N_BASE_URL=http://localhost:5678
+N8N_API_KEY=your_api_key
+ENABLE_DOCKER_TOOLS=True
+ENABLE_N8N_TOOLS=True
 ```
 
-## Available Tools
+### 3. Launching
+```bash
+# Production (SSE via FastAPI)
+python run.py
 
-| Tool | Description |
-|:---|:---|
-| `list_all_workflows` | List workflows with optional tag filter |
-| `deploy_workflow` | Smart Upsert: create or update by name |
-| `read_workflow_structure` | Get full workflow JSON |
-| `diagnose_execution` | Deep dive into failed execution |
-| `auto_fix_workflow` | Diagnose + patch in one call |
-| `install_community_node` | Install npm packages |
-| `toggle_workflow_state` | Activate/deactivate workflows |
-| `delete_workflow` | Remove workflows |
-
-## API Endpoints
-
-- `GET /health` - Server health check
-- `GET /info` - Server configuration
-
-## Architecture
-
+# CLI / Debug Mode
+python run_stdio.py
 ```
-app/
-├── core/
-│   ├── config.py    # Pydantic Settings
-│   ├── client.py    # HTTP Client + error handling
-│   └── logging.py   # Structured logging
-├── models/
-│   └── schemas.py   # Data contracts
-├── services/
-│   ├── architect.py # Deploy/Read/Clone
-│   ├── debugger.py  # Diagnostics
-│   ├── manager.py   # List/Toggle/Delete
-│   └── packages.py  # npm management
-└── main.py          # FastAPI + FastMCP gateway
+
+### 4. Verification
+Run the unified verification suite:
+```bash
+python verify_system.py
 ```
+
+## 🧠 Design Philosophy
+Built on the **"Jorge Aguirre" Protocol**, prioritizing Robustness, Security, and Clean-Code through iterative AUDIT phases before any production deployment.
